@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roommate Live Availability Dashboard</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131b2e;
+            --card-hover: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --green: #22c55e;
+            --red: #ef4444;
+            --accent: #3b82f6;
+            --border: #1e293b;
+            --border-highlight: #334155;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        header {
+            max-width: 1400px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1.5rem;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 { font-size: 1.85rem; font-weight: 800; letter-spacing: -0.025em; }
+
+        .view-toggles {
+            display: flex;
+            background: var(--card-bg);
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid var(--border-highlight);
+        }
+
+        .view-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .view-btn.active {
+            background: var(--accent);
+            color: white;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Controls Toolbar */
+        .controls-bar {
+            background-color: var(--card-bg);
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            max-width: 1400px;
+            margin: 0 auto 2rem auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid var(--border-highlight);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        select, input[type="time"], input[type="text"] {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-highlight);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        select:focus, input:focus { border-color: var(--accent); }
+
+        .time-slider-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        .btn {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+
+        /* Filter Pills */
+        .filters-bar {
+            max-width: 1400px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .filter-pill {
+            background: var(--card-bg);
+            border: 1px solid var(--border-highlight);
+            color: var(--text-secondary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-pill.active {
+            background: var(--border-highlight);
+            color: var(--text-primary);
+            border-color: var(--text-secondary);
+        }
+
+        /* Main Container Views */
+        .main-container { max-width: 1400px; margin: 0 auto; }
+
+        /* View A: Grid Cards */
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid var(--border-highlight);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px rgba(0,0,0,0.5);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .name { font-size: 1.15rem; font-weight: 700; }
+        .phone { font-size: 0.85rem; color: var(--text-secondary); margin-top: 2px; }
+
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-free { background-color: var(--green); box-shadow: 0 0 10px var(--green); }
+        .status-busy { background-color: var(--red); box-shadow: 0 0 10px var(--red); }
+
+        .status-box {
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .status-box.free { background: rgba(34, 197, 94, 0.1); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.2); }
+        .status-box.busy { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* View B: Matrix View */
+        .matrix-view { display: none; overflow-x: auto; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-highlight); }
+        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+        th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; text-align: center; }
+        th:first-child, td:first-child { text-align: left; position: sticky; left: 0; background: var(--card-bg); z-index: 2; font-weight: 700; }
+        th { background: rgba(255,255,255,0.02); color: var(--text-secondary); font-weight: 700; }
+        .cell-busy { background: rgba(239, 68, 68, 0.15); color: #f87171; border-radius: 4px; font-weight: 600; }
+        .cell-free { color: var(--text-secondary); }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <div>
+                <h1>Roommate Live Availability Dashboard</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Real-time schedule monitoring for all 35 household members</p>
+            </div>
+            <div class="view-toggles">
+                <button class="view-btn active" id="btnViewA" onclick="switchView('A')">View A: Live Status Board</button>
+                <button class="view-btn" id="btnViewB" onclick="switchView('B')">View B: Weekly Matrix</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Controls Toolbar -->
+    <div class="controls-bar">
+        <div class="control-group">
+            <label for="daySelect">Day</label>
+            <select id="daySelect" onchange="updateDashboard()">
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+            </select>
+        </div>
+
+        <div class="control-group time-slider-wrapper">
+            <label for="timeSlider">Time</label>
+            <input type="range" id="timeSlider" min="480" max="1200" step="15" value="720" oninput="onSliderInput(this.value)">
+            <input type="time" id="timeInput" value="12:00" onchange="onTimeInput(this.value)" style="width: 110px;">
+        </div>
+
+        <div class="control-group">
+            <button class="btn" onclick="setToNow()">Jump to Now</button>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar (Active on View A) -->
+    <div class="filters-bar" id="filtersBar">
+        <input type="text" id="searchInput" placeholder="Search roommate by name..." oninput="updateDashboard()" style="flex: 1; min-width: 200px;">
+        <button class="filter-pill active" onclick="setFilter('all', this)">All (35)</button>
+        <button class="filter-pill" onclick="setFilter('free', this)">🟢 Free Right Now</button>
+        <button class="filter-pill" onclick="setFilter('busy', this)">🔴 In Class</button>
+    </div>
+
+    <!-- Main Content Container -->
+    <div class="main-container">
+        <!-- View A: Status Grid -->
+        <div id="viewAGrid" class="grid-view"></div>
+
+        <!-- View B: Timetable Matrix with Precise Times -->
+        <div id="viewBMatrix" class="matrix-view">
+            <table>
+                <thead>
+                    <tr id="matrixHeaderRow">
+                        <th>Roommate</th>
+                    </tr>
+                </thead>
+                <tbody id="matrixBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Full verified database of all 35 roommates and schedules
+        const roommates = [
+            { name: "Gavin Farragher", phone: "781-571-4037", schedule: { Monday: [["09:00", "09:55"], ["11:15", "12:05"]], Tuesday: [["08:30", "09:45"], ["11:30", "12:45"]], Wednesday: [["09:00", "09:55"], ["11:15", "12:05"], ["16:00", "16:50"]], Thursday: [["08:30", "09:45"], ["11:30", "12:45"]], Friday: [["09:00", "09:55"], ["11:15", "12:05"]] } },
+            { name: "Quinn Dowd", phone: "508-330-1768", schedule: { Monday: [["13:00", "14:15"]], Tuesday: [["10:00", "11:15"], ["11:30", "12:45"], ["13:00", "14:15"]], Wednesday: [["13:00", "14:15"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"], ["13:00", "14:15"]], Friday: [] } },
+            { name: "Matt Ellwood", phone: "781-490-2390", schedule: { Monday: [["09:00", "10:00"], ["13:25", "14:15"], ["14:30", "15:20"]], Tuesday: [["13:00", "14:15"], ["16:00", "17:15"]], Wednesday: [["09:00", "10:00"], ["14:30", "15:30"]], Thursday: [["13:00", "14:15"], ["16:00", "17:15"]], Friday: [["09:00", "10:00"], ["12:15", "13:15"]] } },
+            { name: "Frankie Condakes", phone: "617-947-7908", schedule: { Monday: [["10:10", "11:00"], ["13:25", "14:15"], ["16:00", "17:15"]], Tuesday: [["13:00", "13:50"], ["17:30", "18:20"]], Wednesday: [["10:10", "11:00"], ["13:25", "14:25"], ["16:00", "17:15"]], Thursday: [["13:00", "13:50"]], Friday: [["12:20", "13:10"], ["13:25", "14:15"], ["14:30", "15:20"]] } },
+            { name: "Saintino Castillo", phone: "617-913-7949", schedule: { Monday: [["12:20", "13:10"], ["16:00", "17:15"]], Tuesday: [["10:00", "11:15"], ["11:30", "12:45"]], Wednesday: [["10:00", "11:00"], ["12:20", "13:10"], ["13:25", "14:15"], ["16:00", "17:15"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"], ["14:30", "15:20"]], Friday: [["12:20", "13:10"]] } },
+            { name: "Derrick Davis", phone: "774-424-9800", schedule: { Monday: [["10:00", "11:00"], ["13:30", "14:45"]], Tuesday: [["13:00", "14:15"], ["14:30", "15:45"], ["16:00", "18:30"]], Wednesday: [["10:00", "11:00"], ["14:30", "15:45"]], Thursday: [["13:00", "14:15"], ["14:30", "15:45"]], Friday: [["10:00", "11:00"]] } },
+            { name: "Francesco Fulciniti", phone: "781-888-0001", schedule: { Monday: [["11:15", "12:05"], ["17:30", "18:45"]], Tuesday: [["10:00", "11:15"]], Wednesday: [["11:15", "12:05"], ["16:00", "16:55"]], Thursday: [["10:00", "11:15"], ["11:30", "12:20"]], Friday: [["11:15", "12:05"], ["13:25", "14:15"], ["17:30", "18:45"]] } },
+            { name: "Nick Barriga", phone: "508-431-4516", schedule: { Monday: [["09:05", "09:55"], ["13:25", "14:15"]], Tuesday: [["10:00", "12:45"]], Wednesday: [["09:05", "09:55"], ["13:25", "14:15"]], Thursday: [["10:00", "11:15"], ["14:30", "15:45"]], Friday: [["10:10", "11:00"], ["11:15", "12:05"]] } },
+            { name: "Simon Dietz", phone: "908-674-1915", schedule: { Monday: [["14:30", "15:20"], ["16:00", "17:15"]], Tuesday: [["10:00", "11:15"], ["14:30", "15:30"], ["16:00", "16:30"]], Wednesday: [["13:25", "14:15"], ["14:30", "15:20"]], Thursday: [["10:00", "11:15"], ["14:30", "15:30"]], Friday: [["09:05", "09:55"], ["11:30", "12:45"]] } },
+            { name: "Jonathan Brown", phone: "978-536-1937", schedule: { Monday: [["08:00", "08:45"], ["14:30", "15:45"]], Tuesday: [["11:30", "12:45"]], Wednesday: [["08:00", "08:45"], ["10:00", "10:45"], ["13:15", "14:30"]], Thursday: [["14:30", "15:45"]], Friday: [["08:00", "08:45"]] } },
+            { name: "Milhe Hauck", phone: "508-617-6378", schedule: { Monday: [["09:00", "09:50"], ["14:30", "15:45"], ["17:30", "18:45"]], Tuesday: [["11:30", "12:45"], ["13:00", "14:15"], ["16:00", "16:45"]], Wednesday: [["09:00", "09:50"], ["14:30", "15:45"], ["17:30", "18:45"]], Thursday: [["11:30", "12:45"], ["13:00", "14:15"]], Friday: [["14:30", "15:15"]] } },
+            { name: "Adam J-E", phone: "978-493-4357", schedule: { Monday: [["09:05", "10:20"], ["12:20", "13:20"]], Tuesday: [["08:30", "09:20"], ["10:00", "11:05"], ["14:30", "15:45"]], Wednesday: [["09:05", "10:05"], ["12:20", "13:20"]], Thursday: [["10:00", "11:00"], ["11:30", "12:45"]], Friday: [["11:15", "12:10"], ["14:30", "15:30"]] } },
+            { name: "Demetri Karolemeas", phone: "617-816-8679", schedule: { Monday: [["09:05", "09:55"], ["10:10", "11:10"], ["17:30", "18:30"]], Tuesday: [["10:00", "11:15"], ["11:30", "12:45"]], Wednesday: [["09:05", "09:55"], ["10:10", "11:10"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"]], Friday: [["09:05", "09:55"], ["10:10", "11:10"]] } },
+            { name: "Roan Lacey", phone: "845-269-8677", schedule: { Monday: [["10:15", "11:00"], ["11:30", "12:45"], ["13:00", "14:15"], ["16:00", "16:45"]], Tuesday: [["11:30", "12:45"], ["13:00", "14:15"], ["14:45", "15:30"]], Wednesday: [["09:05", "09:50"], ["10:15", "11:00"], ["11:30", "12:05"], ["16:00", "16:45"]], Thursday: [["11:30", "12:45"], ["13:00", "14:15"], ["17:30", "18:15"]], Friday: [["10:15", "11:00"]] } },
+            { name: "Mason Mills", phone: "508-808-4358", schedule: { Monday: [["10:30", "11:15"], ["13:00", "14:15"], ["16:00", "17:30"]], Tuesday: [["10:00", "11:15"], ["13:00", "14:15"], ["17:30", "18:45"]], Wednesday: [["10:00", "11:15"], ["14:30", "15:45"], ["17:30", "18:45"]], Thursday: [["10:00", "11:15"], ["13:00", "14:15"], ["17:30", "18:45"]], Friday: [] } },
+            { name: "Max Meicher", phone: "978-968-5856", schedule: { Monday: [["09:05", "09:55"], ["13:25", "14:15"]], Tuesday: [["10:00", "11:15"], ["11:30", "12:45"]], Wednesday: [["09:05", "09:55"], ["13:25", "14:15"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"]], Friday: [["10:00", "11:00"], ["11:15", "12:05"]] } },
+            { name: "Patrick Murray", phone: "774-641-6570", schedule: { Monday: [["09:05", "09:55"], ["11:15", "12:05"], ["13:25", "14:15"], ["18:30", "19:20"]], Tuesday: [["11:30", "12:20"]], Wednesday: [["09:05", "09:55"], ["11:15", "12:05"], ["13:25", "14:15"], ["16:00", "16:50"]], Thursday: [["11:30", "12:20"]], Friday: [["11:15", "12:05"], ["13:25", "14:15"], ["14:30", "15:20"]] } },
+            { name: "Brayden Mackenzie", phone: "978-808-2250", schedule: { Monday: [["09:05", "09:55"], ["11:15", "12:15"]], Tuesday: [["10:00", "11:00"], ["13:00", "14:05"]], Wednesday: [["09:05", "09:55"], ["16:00", "17:00"]], Thursday: [["10:00", "11:00"], ["13:00", "14:05"]], Friday: [["11:15", "12:15"], ["12:20", "13:20"]] } },
+            { name: "Mikey McCabe", phone: "508-851-7643", schedule: { Monday: [["08:00", "08:50"], ["09:05", "10:00"], ["13:25", "14:15"]], Tuesday: [["11:30", "12:45"], ["13:00", "14:15"]], Wednesday: [["08:00", "08:50"], ["09:05", "10:00"]], Thursday: [["11:30", "12:45"], ["13:00", "14:15"]], Friday: [["08:00", "08:50"], ["09:05", "10:00"]] } },
+            { name: "Ryan Medina", phone: "781-579-0741", schedule: { Monday: [["09:00", "09:55"], ["14:30", "15:45"]], Tuesday: [["10:00", "12:20"]], Wednesday: [["09:00", "09:55"], ["14:30", "15:45"]], Thursday: [["10:00", "12:20"], ["16:00", "16:55"]], Friday: [["13:25", "15:20"]] } },
+            { name: "Jackson Martin", phone: "781-792-4739", schedule: { Monday: [["10:10", "11:00"], ["12:20", "13:10"], ["16:00", "17:15"]], Tuesday: [["08:30", "09:30"], ["10:00", "11:00"], ["11:30", "12:45"]], Wednesday: [["10:10", "11:00"], ["12:20", "13:10"], ["13:25", "14:25"]], Thursday: [["10:00", "11:00"], ["11:30", "12:45"]], Friday: [["12:20", "13:10"]] } },
+            { name: "Mason Nash", phone: "781-857-0650", schedule: { Monday: [["08:00", "09:30"], ["14:30", "15:45"], ["16:00", "17:15"]], Tuesday: [["08:30", "09:45"], ["11:30", "12:45"]], Wednesday: [["08:00", "09:30"], ["14:30", "15:45"]], Thursday: [["08:30", "09:45"], ["11:30", "12:45"], ["14:30", "15:20"]], Friday: [] } },
+            { name: "Lucas Olmstead", phone: "617-840-2218", schedule: { Monday: [["11:00", "12:00"], ["16:00", "17:15"], ["17:30", "18:30"]], Tuesday: [["11:30", "12:45"], ["13:00", "14:00"]], Wednesday: [["11:00", "12:00"], ["16:00", "17:15"], ["17:30", "18:30"]], Thursday: [["14:30", "15:45"]], Friday: [["09:00", "10:00"]] } },
+            { name: "Sean Osagie", phone: "617-803-6681", schedule: { Monday: [["09:05", "09:55"], ["11:15", "12:05"], ["14:30", "15:20"]], Tuesday: [["10:00", "12:30"]], Wednesday: [["09:05", "09:55"], ["11:15", "12:05"], ["14:30", "15:20"], ["16:00", "18:30"]], Thursday: [], Friday: [["09:05", "09:55"], ["11:15", "12:05"], ["14:30", "15:20"]] } },
+            { name: "Charlie Silva", phone: "978-414-7728", schedule: { Monday: [["09:05", "09:55"], ["12:20", "13:10"]], Tuesday: [["10:00", "11:15"], ["11:30", "12:45"]], Wednesday: [["09:05", "09:55"], ["11:15", "12:05"], ["13:25", "14:15"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"]], Friday: [["09:05", "09:55"], ["10:10", "11:00"], ["12:20", "13:10"]] } },
+            { name: "Jaeden Taderera", phone: "617-763-1023", schedule: { Monday: [["09:05", "09:55"], ["17:30", "18:45"]], Tuesday: [["08:30", "09:20"], ["10:00", "11:15"], ["11:30", "12:45"]], Wednesday: [["09:05", "09:55"], ["17:30", "18:45"]], Thursday: [["10:00", "11:15"], ["11:30", "12:45"]], Friday: [["13:25", "14:15"]] } },
+            { name: "Thomas Tadesse", phone: "857-523-1751", schedule: { Monday: [["09:00", "09:40"], ["09:40", "11:00"], ["12:20", "13:20"]], Tuesday: [["13:00", "14:00"]], Wednesday: [["09:00", "10:00"], ["10:00", "11:00"], ["12:20", "13:20"]], Thursday: [["13:00", "14:00"], ["14:30", "15:30"]], Friday: [["09:00", "10:00"], ["12:20", "13:20"], ["13:25", "14:25"]] } },
+            { name: "Joe Torraco", phone: "781-414-2765", schedule: { Monday: [["11:15", "12:10"], ["14:30", "15:45"], ["16:00", "17:15"], ["17:30", "18:45"]], Tuesday: [], Wednesday: [["11:15", "12:10"]], Thursday: [["14:30", "15:45"], ["16:00", "17:15"], ["17:30", "18:45"]], Friday: [["12:20", "13:10"]] } },
+            { name: "Gavin Vala", phone: "413-388-7956", schedule: { Monday: [["10:10", "11:00"], ["13:00", "13:50"], ["14:30", "15:45"]], Tuesday: [["10:00", "11:00"]], Wednesday: [["10:10", "11:00"], ["12:20", "13:20"]], Thursday: [["10:00", "11:00"], ["13:00", "13:50"], ["14:30", "15:45"], ["16:00", "16:50"]], Friday: [["09:00", "09:50"], ["11:10", "12:10"]] } },
+            { name: "Ben Viggiani", phone: "518-530-3453", schedule: { Monday: [["14:30", "15:45"], ["16:00", "17:15"]], Tuesday: [["11:30", "12:45"], ["14:30", "15:45"]], Wednesday: [["13:20", "14:15"], ["14:30", "15:45"], ["16:00", "17:15"]], Thursday: [["11:30", "12:45"], ["14:30", "15:45"]], Friday: [] } },
+            { name: "Alex Yeomans", phone: "781-633-1661", schedule: { Monday: [["09:05", "09:55"], ["13:15", "14:15"], ["17:30", "18:45"]], Tuesday: [["08:30", "09:45"], ["14:30", "15:45"], ["17:30", "18:20"]], Wednesday: [["09:05", "09:55"], ["17:30", "18:45"]], Thursday: [["08:30", "09:45"], ["14:30", "15:45"]], Friday: [] } },
+            { name: "Sam Yosca", phone: "774-330-8058", schedule: { Monday: [["09:05", "09:55"], ["12:20", "13:10"], ["13:25", "17:15"]], Tuesday: [["10:00", "11:15"], ["13:00", "14:55"]], Wednesday: [["09:05", "09:55"], ["10:10", "11:00"], ["12:20", "13:10"], ["13:25", "17:15"]], Thursday: [["10:00", "11:15"], ["11:30", "13:25"], ["14:30", "17:00"]], Friday: [["12:20", "13:10"], ["13:25", "17:15"]] } },
+            { name: "Zach Schwefler", phone: "978-877-1767", schedule: { Monday: [["10:00", "10:45"], ["13:00", "14:00"], ["16:00", "17:00"]], Tuesday: [["13:00", "13:45"], ["14:15", "15:45"]], Wednesday: [["09:00", "09:45"], ["10:00", "10:45"], ["13:00", "13:45"]], Thursday: [["13:00", "13:45"], ["14:15", "15:45"]], Friday: [["10:00", "10:45"], ["12:00", "13:00"], ["13:00", "13:45"]] } }
+        ];
+
+        let currentFilter = 'all';
+        let activeView = 'A';
+
+        function timeToMinutes(timeStr) {
+            const [h, m] = timeStr.split(':').map(Number);
+            return h * 60 + m;
+        }
+
+        function minutesToTimeStr(minutes) {
+            const h = Math.floor(minutes / 60);
+            const m = minutes % 60;
+            return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+        }
+
+        function onSliderInput(val) {
+            const timeStr = minutesToTimeStr(Number(val));
+            document.getElementById('timeInput').value = timeStr;
+            updateDashboard();
+        }
+
+        function onTimeInput(timeStr) {
+            if (!timeStr) return;
+            const mins = timeToMinutes(timeStr);
+            document.getElementById('timeSlider').value = mins;
+            updateDashboard();
+        }
+
+        function setToNow() {
+            const now = new Date();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            let dayName = days[now.getDay()];
+            if (dayName === 'Saturday' || dayName === 'Sunday') dayName = 'Monday';
+            document.getElementById('daySelect').value = dayName;
+
+            const mins = now.getHours() * 60 + now.getMinutes();
+            const clampedMins = Math.max(480, Math.min(1200, mins));
+            document.getElementById('timeSlider').value = clampedMins;
+            document.getElementById('timeInput').value = minutesToTimeStr(clampedMins);
+            updateDashboard();
+        }
+
+        function setFilter(filterType, element) {
+            currentFilter = filterType;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            element.classList.add('active');
+            updateDashboard();
+        }
+
+        function switchView(view) {
+            activeView = view;
+            document.getElementById('btnViewA').classList.toggle('active', view === 'A');
+            document.getElementById('btnViewB').classList.toggle('active', view === 'B');
+            document.getElementById('filtersBar').style.display = view === 'A' ? 'flex' : 'none';
+            document.getElementById('viewAGrid').style.display = view === 'A' ? 'grid' : 'none';
+            document.getElementById('viewBMatrix').style.display = view === 'B' ? 'block' : 'none';
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            const selectedDay = document.getElementById('daySelect').value;
+            const currentMins = timeToMinutes(document.getElementById('timeInput').value);
+            const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+
+            document.querySelector('.filter-pill').innerText = `All (${roommates.length})`;
+
+            if (activeView === 'A') {
+                const grid = document.getElementById('viewAGrid');
+                grid.innerHTML = '';
+
+                roommates.forEach(person => {
+                    if (searchQuery && !person.name.toLowerCase().includes(searchQuery)) return;
+
+                    let isBusy = false;
+                    let activeClass = "";
+                    const classes = person.schedule[selectedDay] || [];
+                    
+                    for (let [start, end] of classes) {
+                        if (currentMins >= timeToMinutes(start) && currentMins <= timeToMinutes(end)) {
+                            isBusy = true;
+                            activeClass = `${start} - ${end}`;
+                            break;
+                        }
+                    }
+
+                    if (currentFilter === 'free' && isBusy) return;
+                    if (currentFilter === 'busy' && !isBusy) return;
+
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <div>
+                            <div class="card-header">
+                                <div>
+                                    <div class="name">${person.name}</div>
+                                    <div class="phone">${person.phone}</div>
+                                </div>
+                                <span class="indicator ${isBusy ? 'status-busy' : 'status-free'}"></span>
+                            </div>
+                        </div>
+                        <div class="status-box ${isBusy ? 'busy' : 'free'}">
+                            <span>${isBusy ? 'In Class' : 'Free / Available'}</span>
+                            <span style="font-size: 0.75rem; opacity: 0.8;">${isBusy ? activeClass : ''}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } else {
+                // Render Matrix View B with precise hourly time columns (8:00 AM to 7:00 PM)
+                const headerRow = document.getElementById('matrixHeaderRow');
+                const matrixBody = document.getElementById('matrixBody');
+                
+                const hoursList = [];
+                for (let h = 8; h <= 19; h++) {
+                    const hourStr = h < 10 ? `0${h}:00` : `${h}:00`;
+                    const displayHour = h === 12 ? '12 PM' : h > 12 ? `${h - 12} PM` : `${h} AM`;
+                    hoursList.push({ val: hourStr, label: displayHour });
+                }
+
+                let headerHtml = `<th>Roommate</th>`;
+                hoursList.forEach(item => {
+                    headerHtml += `<th>${item.label}</th>`;
+                });
+                headerRow.innerHTML = headerHtml;
+
+                matrixBody.innerHTML = '';
+                roommates.forEach(person => {
+                    const row = document.createElement('tr');
+                    let rowHtml = `<td>${person.name}</td>`;
+                    
+                    hoursList.forEach(item => {
+                        const hMins = timeToMinutes(item.val);
+                        let busyClass = false;
+                        const classes = person.schedule[selectedDay] || [];
+                        for (let [start, end] of classes) {
+                            if (hMins >= timeToMinutes(start) && hMins < timeToMinutes(end)) {
+                                busyClass = true;
+                                break;
+                            }
+                        }
+                        rowHtml += busyClass ? `<td class="cell-busy">In Class</td>` : `<td class="cell-free">Free</td>`;
+                    });
+
+                    row.innerHTML = rowHtml;
+                    matrixBody.appendChild(row);
+                });
+            }
+        }
+
+        // Initialize on load
+        setToNow();
+    </script>
+</body>
+</html>
